@@ -8,4 +8,6 @@ terraform {
 
 provider "n8n" {}
 
-data "n8n_coffees" "example" {}
+data "n8n_workflow" "example" {
+  id = "flibble"
+}

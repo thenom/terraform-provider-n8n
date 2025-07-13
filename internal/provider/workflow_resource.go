@@ -2,113 +2,21 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure the implementation satisfies the expected interfaces.
-var (
-	_ datasource.DataSource              = &workflowDataSource{}
-	_ datasource.DataSourceWithConfigure = &workflowDataSource{}
-)
-
-// NewWorkflowDataSource is a helper function to simplify the provider implementation.
-func NewWorkflowDataSource() datasource.DataSource {
-	return &workflowDataSource{}
-}
-
 // workflowDataSource is the data source implementation.
 type workflowDataSource struct {
 	client *client
 }
 
-// workflowDataSourceModel maps the data source schema data and the API response.
-type workflowDataSourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Active      types.Bool   `tfsdk:"active"`
-	Nodes       []node       `tfsdk:"nodes"`
-	Connections types.Map    `tfsdk:"connections"`
-	Settings    settings     `tfsdk:"settings"`
-	StaticData  types.String `tfsdk:"static_data"`
-	Tags        []tag        `tfsdk:"tags"`
-	CreatedAt   types.String `tfsdk:"created_at"`
-	UpdatedAt   types.String `tfsdk:"updated_at"`
-}
-
-// node represents a node in a workflow.
-type node struct {
-	ID               types.String    `tfsdk:"id"`
-	Name             types.String    `tfsdk:"name"`
-	WebhookID        types.String    `tfsdk:"webhook_id"`
-	Disabled         types.Bool      `tfsdk:"disabled"`
-	NotesInFlow      types.Bool      `tfsdk:"notes_in_flow"`
-	Notes            types.String    `tfsdk:"notes"`
-	Type             types.String    `tfsdk:"type"`
-	TypeVersion      types.Float32   `tfsdk:"type_version"`
-	ExecuteOnce      types.Bool      `tfsdk:"execute_once"`
-	AlwaysOutputData types.Bool      `tfsdk:"always_output_data"`
-	RetryOnFail      types.Bool      `tfsdk:"retry_on_fail"`
-	MaxTries         types.Float32   `tfsdk:"max_tries"`
-	WaitBetweenTries types.Float32   `tfsdk:"wait_between_tries"`
-	ContinueOnFail   types.Bool      `tfsdk:"continue_on_fail"`
-	OnError          types.String    `tfsdk:"on_error"`
-	Position         types.List      `tfsdk:"position"`
-	Parameters       types.Map       `tfsdk:"parameters"`
-	Credentials      types.Map       `tfsdk:"credentials"`
-	CreatedAt        types.String    `tfsdk:"created_at"`
-	UpdatedAt        types.String    `tfsdk:"updated_at"`
-}
-
-// settings represents the settings of a workflow.
-type settings struct {
-	SaveExecutionProgress    types.Bool   `tfsdk:"save_execution_progress"`
-	SaveManualExecutions     types.Bool   `tfsdk:"save_manual_executions"`
-	SaveDataErrorExecution   types.String `tfsdk:"save_data_error_execution"`
-	SaveDataSuccessExecution types.String `tfsdk:"save_data_success_execution"`
-	ExecutionTimeout         types.Int64  `tfsdk:"execution_timeout"`
-	ErrorWorkflow            types.String `tfsdk:"error_workflow"`
-	Timezone                 types.String `tfsdk:"timezone"`
-	ExecutionOrder           types.String `tfsdk:"execution_order"`
-}
-
-// tag represents a tag in n8n.
-type tag struct {
-	ID        types.String `tfsdk:"id"`
-	Name      types.String `tfsdk:"name"`
-	CreatedAt types.String `tfsdk:"created_at"`
-	UpdatedAt types.String `tfsdk:"updated_at"`
-}
-
-// Configure adds the provider configured client to the data source.
-func (d *workflowDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-	d.client = client
-}
-
-// Metadata returns the data source type name.
-func (d *workflowDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_workflow"
-}
-
 // Schema defines the schema for the data source.
 func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a workflow.",
+		Description: "Lists workflows.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Workflow ID",
@@ -155,7 +63,7 @@ func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Description: "Node type",
 							Computed:    true,
 						},
-						"type_version": schema.FloatAttribute{
+						"type_version": schema.Float32Attribute{
 							Description: "Node type version",
 							Computed:    true,
 						},
@@ -171,11 +79,11 @@ func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Description: "Whether the node retries on fail.",
 							Computed:    true,
 						},
-						"max_tries": schema.FloatAttribute{
+						"max_tries": schema.Float32Attribute{
 							Description: "Max tries for the node.",
 							Computed:    true,
 						},
-						"wait_between_tries": schema.FloatAttribute{
+						"wait_between_tries": schema.Float32Attribute{
 							Description: "Wait between tries for the node.",
 							Computed:    true,
 						},
@@ -189,7 +97,7 @@ func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 						},
 						"position": schema.ListAttribute{
 							Description: "Node position",
-							ElementType: types.FloatType,
+							ElementType: types.Float32Type,
 							Computed:    true,
 						},
 						"parameters": schema.MapAttribute{
@@ -293,32 +201,5 @@ func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 				Computed:    true,
 			},
 		},
-	}
-}
-
-// Read refreshes the Terraform state with the latest data.
-func (d *workflowDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state workflowDataSourceModel
-	diags := req.Config.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Get refreshed workflow value from n8n
-	workflowResponse, err := d.client.getWorkflow(ctx, state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Read n8n Workflow",
-			err.Error(),
-		)
-		return
-	}
-
-	// Set state
-	diags = resp.State.Set(ctx, &workflowResponse)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }

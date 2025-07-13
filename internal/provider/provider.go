@@ -1,8 +1,8 @@
+// Package provider package is the main implementation for the N8N provider
 package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/edenreich/n8n-cli/n8n"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -74,14 +74,7 @@ func (p *n8nProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	}
 
 	// Create a new n8n client
-	n8nClient, err := n8n.NewClient(config.HostURL.ValueString(), config.APIKey.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Create n8n API Client",
-			fmt.Sprintf("Unable to create n8n API client: %s", err),
-		)
-		return
-	}
+	n8nClient := n8n.NewClient(config.HostURL.ValueString(), config.APIKey.ValueString())
 
 	p.client = &client{
 		N8NClient: n8nClient,
@@ -94,7 +87,7 @@ func (p *n8nProvider) Configure(ctx context.Context, req provider.ConfigureReque
 // DataSources defines the data sources implemented in the provider.
 func (p *n8nProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewWorkflowDataSource,
+		NewWorkflowsDataSource,
 	}
 }
 
