@@ -16,7 +16,7 @@ type workflowDataSource struct {
 // Schema defines the schema for the data source.
 func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Lists workflows.",
+		Description: "Workflow details.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Workflow ID",

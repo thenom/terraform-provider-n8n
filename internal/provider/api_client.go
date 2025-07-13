@@ -14,7 +14,7 @@ type client struct {
 	N8NClient *n8n.Client
 }
 
-func (c *client) getWorkflows(ctx context.Context, workflowID string) (*workflowListDataSourceModel, error) {
+func (c *client) getWorkflows(ctx context.Context) (*workflowListDataSourceModel, error) {
 	workflows, err := c.N8NClient.GetWorkflows()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow: %w", err)
@@ -54,12 +54,12 @@ func workflowToModel(ctx context.Context, wf *n8n.Workflow) (*workflowDataSource
 			return nil, fmt.Errorf("failed to convert position: %v", diags)
 		}
 
-		parametersMap, err := convertMapToTypesMap(ctx, *n.Parameters)
+		parametersMap, err := convertInterfaceMapToStringMap(n.Parameters)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert parameters: %w", err)
 		}
 
-		credentialsMap, err := convertMapToTypesMap(ctx, *n.Credentials)
+		credentialsMap, err := convertInterfaceMapToStringMap(n.Credentials)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert credentials: %w", err)
 		}
@@ -121,28 +121,4 @@ func workflowToModel(ctx context.Context, wf *n8n.Workflow) (*workflowDataSource
 	wfModel.Tags = tags
 
 	return &wfModel, nil
-}
-
-func convertInterfaceMapToStringMap(input map[string]interface{}) (map[string]string, error) {
-	output := make(map[string]string)
-	for k, v := range input {
-		str, ok := v.(string)
-		if !ok {
-			return nil, fmt.Errorf("value for key '%s' is not a string", k)
-		}
-		output[k] = str
-	}
-	return output, nil
-}
-
-func convertMapToTypesMap(ctx context.Context, data map[string]interface{}) (types.Map, error) {
-	stringMap, err := convertInterfaceMapToStringMap(data)
-	if err != nil {
-		return types.Map{}, err
-	}
-	mapValue, diags := types.MapValueFrom(ctx, types.StringType, stringMap)
-	if diags.HasError() {
-		return types.Map{}, fmt.Errorf("failed to convert map: %v", diags)
-	}
-	return mapValue, nil
 }

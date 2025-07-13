@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -15,7 +14,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &workflowsDataSource{}
 )
 
-// NewWorkflowDataSource is a helper function to simplify the provider implementation.
+// NewWorkflowsDataSource is a helper function to simplify the provider implementation.
 func NewWorkflowsDataSource() datasource.DataSource {
 	return &workflowsDataSource{}
 }
@@ -49,46 +48,35 @@ func (d *workflowsDataSource) Metadata(_ context.Context, req datasource.Metadat
 
 // Schema defines the schema for the data source.
 func (d *workflowsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	// Get workflow schema
+	wfSchema := datasource.SchemaResponse{}
+	wf := workflowDataSource{}
+	wf.Schema(context.Background(), datasource.SchemaRequest{}, &wfSchema)
+
+	// Setup list of workflow schemas
 	resp.Schema = schema.Schema{
-		Description: "Lists workflows.",
+		Description: "List of workflows.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Description: "Workflow ID",
-				Required:    true,
+			"data": schema.ListNestedAttribute{
+				Description: "Workflows",
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: wfSchema.Schema.Attributes,
+				},
 			},
+		},
+	}
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (d *workflowDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state workflowDataSourceModel
-
-	workflow, err := d.client.getWorkflow()
+func (d *workflowsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	state, err := d.client.getWorkflows(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to Read HashiCups Coffees",
+			"Unable to Read workflows",
 			err.Error(),
 		)
 		return
-	}
-
-	// Map response body to model
-	for _, coffee := range coffees {
-		coffeeState := coffeesModel{
-			ID:          types.Int64Value(int64(coffee.ID)),
-			Name:        types.StringValue(coffee.Name),
-			Teaser:      types.StringValue(coffee.Teaser),
-			Description: types.StringValue(coffee.Description),
-			Price:       types.Float64Value(coffee.Price),
-			Image:       types.StringValue(coffee.Image),
-		}
-
-		for _, ingredient := range coffee.Ingredient {
-			coffeeState.Ingredients = append(coffeeState.Ingredients, coffeesIngredientsModel{
-				ID: types.Int64Value(int64(ingredient.ID)),
-			})
-		}
-
-		state.Coffees = append(state.Coffees, coffeeState)
 	}
 
 	// Set state

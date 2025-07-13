@@ -8,13 +8,11 @@ terraform {
 
 provider "n8n" {
   host_url = "http://localhost:5678"
-  api_key  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YTY1NTQ4ZS1mNWI3LTRlMmUtOGJmMi03ODU2M2E1ZTgxYWQiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzUyNDA4MTQ0LCJleHAiOjE3NTQ5NzEyMDB9.Ra93Tm9b4XUX9Xw9rgNnpvUKDB478ywJp27sZFYdJjM"
+  api_key  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyOTA3MWJjNC02ZDRlLTRmZjAtOTdhOS1iYjQ0M2VmNDI0N2QiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzUyNDE1MDE5LCJleHAiOjE3NTQ5NzEyMDB9.FdH20ZN4fHvJBlTQrJRpqRoSmbbvR-5WI5hkzl9ztkE"
 }
 
-data "n8n_workflow" "nz" {
-  id = "LRUL1Yajg85Au9yv"
-}
+data "n8n_workflows" "nz" {}
 
 output "nz_workflow" {
-  value = data.n8n_workflow.nz
+  value = data.n8n_workflows.nz
 }
