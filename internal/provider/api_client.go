@@ -31,6 +31,21 @@ func (c *client) getWorkflow(ctx context.Context, workflowID string) (*workflowD
 	// Map Nodes
 	nodes := make([]node, len(workflow.Nodes))
 	for i, n := range workflow.Nodes {
+		positionList, diags := types.ListValueFrom(ctx, types.Float32Type, n.Position)
+		if diags.HasError() {
+			return nil, fmt.Errorf("failed to convert position: %v", diags)
+		}
+
+		parametersMap, err := convertMapToTypesMap(ctx, *n.Parameters)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert parameters: %w", err)
+		}
+
+		credentialsMap, err := convertMapToTypesMap(ctx, *n.Credentials)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert credentials: %w", err)
+		}
+
 		nodes[i] = node{
 			ID:               types.StringPointerValue(n.Id),
 			Name:             types.StringPointerValue(n.Name),
@@ -47,9 +62,9 @@ func (c *client) getWorkflow(ctx context.Context, workflowID string) (*workflowD
 			WaitBetweenTries: types.Float32PointerValue(n.WaitBetweenTries),
 			ContinueOnFail:   types.BoolPointerValue(n.ContinueOnFail),
 			OnError:          types.StringPointerValue(n.OnError),
-			Position:         convertInt64SliceToTypesInt64Slice(n.Position),
-			Parameters:       convertMapToTypesMap(ctx, n.Parameters),
-			Credentials:      convertMapToTypesMap(ctx, n.Credentials),
+			Position:         positionList,
+			Parameters:       parametersMap,
+			Credentials:      credentialsMap,
 			CreatedAt:        types.StringValue(n.CreatedAt.String()),
 			UpdatedAt:        types.StringValue(n.UpdatedAt.String()),
 		}
@@ -67,8 +82,8 @@ func (c *client) getWorkflow(ctx context.Context, workflowID string) (*workflowD
 	wfModel.Settings = settings{
 		SaveExecutionProgress:    types.BoolPointerValue(workflow.Settings.SaveExecutionProgress),
 		SaveManualExecutions:     types.BoolPointerValue(workflow.Settings.SaveManualExecutions),
-		SaveDataErrorExecution:   types.StringPointerValue(workflow.Settings.SaveDataErrorExecution),
-		SaveDataSuccessExecution: types.StringPointerValue(workflow.Settings.SaveDataSuccessExecution),
+		SaveDataErrorExecution:   types.StringValue(string(*workflow.Settings.SaveDataErrorExecution)),
+		SaveDataSuccessExecution: types.StringValue(string(*workflow.Settings.SaveDataSuccessExecution)),
 		ExecutionTimeout:         types.Int64PointerValue(workflow.Settings.ExecutionTimeout),
 		ErrorWorkflow:            types.StringPointerValue(workflow.Settings.ErrorWorkflow),
 		Timezone:                 types.StringPointerValue(workflow.Settings.Timezone),
@@ -88,4 +103,28 @@ func (c *client) getWorkflow(ctx context.Context, workflowID string) (*workflowD
 	wfModel.Tags = tags
 
 	return &wfModel, nil
+}
+
+func convertInterfaceMapToStringMap(input map[string]interface{}) (map[string]string, error) {
+	output := make(map[string]string)
+	for k, v := range input {
+		str, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("value for key '%s' is not a string", k)
+		}
+		output[k] = str
+	}
+	return output, nil
+}
+
+func convertMapToTypesMap(ctx context.Context, data map[string]interface{}) (types.Map, error) {
+	stringMap, err := convertInterfaceMapToStringMap(data)
+	if err != nil {
+		return types.Map{}, err
+	}
+	mapValue, diags := types.MapValueFrom(ctx, types.StringType, stringMap)
+	if diags.HasError() {
+		return types.Map{}, fmt.Errorf("failed to convert map: %v", diags)
+	}
+	return mapValue, nil
 }

@@ -41,30 +41,27 @@ type workflowDataSourceModel struct {
 
 // node represents a node in a workflow.
 type node struct {
-	ID               types.String  `tfsdk:"id"`
-	Name             types.String  `tfsdk:"name"`
-	WebhookID        types.String  `tfsdk:"webhook_id"`
-	Disabled         types.Bool    `tfsdk:"disabled"`
-	NotesInFlow      types.Bool    `tfsdk:"notes_in_flow"`
-	Notes            types.String  `tfsdk:"notes"`
-	Type             types.String  `tfsdk:"type"`
-	TypeVersion      types.Int64   `tfsdk:"type_version"`
-	ExecuteOnce      types.Bool    `tfsdk:"execute_once"`
-	AlwaysOutputData types.Bool    `tfsdk:"always_output_data"`
-	RetryOnFail      types.Bool    `tfsdk:"retry_on_fail"`
-	MaxTries         types.Int64   `tfsdk:"max_tries"`
-	WaitBetweenTries types.Int64   `tfsdk:"wait_between_tries"`
-	ContinueOnFail   types.Bool    `tfsdk:"continue_on_fail"`
-	OnError          types.String  `tfsdk:"on_error"`
-	Position         []types.Int64 `tfsdk:"position"`
-	Parameters       types.Map     `tfsdk:"parameters"`
-	Credentials      types.Map     `tfsdk:"credentials"`
-	CreatedAt        types.String  `tfsdk:"created_at"`
-	UpdatedAt        types.String  `tfsdk:"updated_at"`
+	ID               types.String    `tfsdk:"id"`
+	Name             types.String    `tfsdk:"name"`
+	WebhookID        types.String    `tfsdk:"webhook_id"`
+	Disabled         types.Bool      `tfsdk:"disabled"`
+	NotesInFlow      types.Bool      `tfsdk:"notes_in_flow"`
+	Notes            types.String    `tfsdk:"notes"`
+	Type             types.String    `tfsdk:"type"`
+	TypeVersion      types.Float32   `tfsdk:"type_version"`
+	ExecuteOnce      types.Bool      `tfsdk:"execute_once"`
+	AlwaysOutputData types.Bool      `tfsdk:"always_output_data"`
+	RetryOnFail      types.Bool      `tfsdk:"retry_on_fail"`
+	MaxTries         types.Float32   `tfsdk:"max_tries"`
+	WaitBetweenTries types.Float32   `tfsdk:"wait_between_tries"`
+	ContinueOnFail   types.Bool      `tfsdk:"continue_on_fail"`
+	OnError          types.String    `tfsdk:"on_error"`
+	Position         types.List      `tfsdk:"position"`
+	Parameters       types.Map       `tfsdk:"parameters"`
+	Credentials      types.Map       `tfsdk:"credentials"`
+	CreatedAt        types.String    `tfsdk:"created_at"`
+	UpdatedAt        types.String    `tfsdk:"updated_at"`
 }
-
-// connections represents the connections in a workflow.
-type connections map[string]interface{}
 
 // settings represents the settings of a workflow.
 type settings struct {
@@ -158,7 +155,7 @@ func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Description: "Node type",
 							Computed:    true,
 						},
-						"type_version": schema.Int64Attribute{
+						"type_version": schema.FloatAttribute{
 							Description: "Node type version",
 							Computed:    true,
 						},
@@ -174,11 +171,11 @@ func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Description: "Whether the node retries on fail.",
 							Computed:    true,
 						},
-						"max_tries": schema.Int64Attribute{
+						"max_tries": schema.FloatAttribute{
 							Description: "Max tries for the node.",
 							Computed:    true,
 						},
-						"wait_between_tries": schema.Int64Attribute{
+						"wait_between_tries": schema.FloatAttribute{
 							Description: "Wait between tries for the node.",
 							Computed:    true,
 						},
@@ -192,7 +189,7 @@ func (d *workflowDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 						},
 						"position": schema.ListAttribute{
 							Description: "Node position",
-							ElementType: types.Int64Type,
+							ElementType: types.FloatType,
 							Computed:    true,
 						},
 						"parameters": schema.MapAttribute{
