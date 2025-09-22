@@ -1,11 +1,9 @@
 module terraform-provider-n8n
 
-go 1.24.2
-
-toolchain go1.24.4
+go 1.25
 
 require (
-	github.com/edenreich/n8n-cli v0.5.2
+	github.com/edenreich/n8n-cli v0.6.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	github.com/hashicorp/terraform-plugin-go v0.28.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
